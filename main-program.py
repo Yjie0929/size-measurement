@@ -1,11 +1,8 @@
 from scipy.spatial.distance import euclidean
-from imutils import contours, perspective
-from threading import Thread  # 导入线程，后期可以实时写入数据库
 import numpy as np
 import imutils
 import time
 import cv2
-import win32com.client
 
 '''
 来自于：Lya
