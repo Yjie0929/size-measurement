@@ -1,2 +1,2 @@
-# Real-time-measuremen-based-on-OpenCV
-使用OpenCV实现物体的大小实时测量（Real time measurement of object size using OpenCV.）
+# 注意
+因为大学专业是机械设计，但我又很喜欢计算机技术，所有就在这个仓库存放自己做过的、自己认为比较有意思的projet。
