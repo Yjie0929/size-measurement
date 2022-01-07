@@ -11,6 +11,7 @@ import cv2
 （I did it in college because I was bored）
 '''
 
+
 def delay(content):
     print('--------' + str(content) + '--------')
     time.sleep(0.5)
@@ -71,6 +72,7 @@ def reference_processing():
         image = call_camera()  # 调用摄像头
         points = get_points(image)  # 图像处理
         selected_points = []  # 创建被筛选的轮廓数据的容器
+
         # --------按面积大小筛选轮廓--------
         filter_area = 1
         while True:
@@ -141,12 +143,10 @@ def draw_frame(image, points, tag):
             left_point, right_point = min_area_point[0], min_area_point[1]  # 获取两处端点的信息
             X = left_point[0] + int(abs(right_point[0] - left_point[0]) / 2)  # 获取顶部中点X坐标
             Y = left_point[1] + int(abs(right_point[1] - left_point[1]) / 2)  # 获取顶部中点Y坐标
-            # perspective_point = perspective.order_points(min_area_point)  # 端点透视变换
             int_point = [min_area_point.astype('int')]  # 修改数据类型
-            # int_point = [perspective_point.astype('int')]  # 修改数据类型
             cv2.drawContours(image, int_point, -1, (0, 0, 255), 1)  # 绘制边框
-            radius = (euclidean(left_point, right_point) / rate) / 2  # 获取半径
-            area = int((radius * pow(3.1415926, 2)))  # 面积计算(园)
+            radius = (euclidean(left_point, right_point) / 2) / rate  # 获取半径
+            area = int((3.1415926 * pow(radius, 2)))  # 面积计算(圆)
             # 展示面积信息
             cv2.putText(image, '{}'.format(area), (int(X), int(Y)), cv2.FONT_HERSHEY_SIMPLEX, 5, (0, 0, 255), 5)
 
