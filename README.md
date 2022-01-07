@@ -1,12 +1,10 @@
 # Hey~ 
 
-
-@[TOC](目录)
-
 # 前言
 **注意：不讲实现原理，也没有做UI，精度就玩玩的级别，记得打（尽量柔和的）光。**
 # for reference only. 
-# for learning.（仅供参考，只用于学习）
+# for learning.
+# （仅供参考，只用于学习）
 
 (Because I'm still a student, there are many things I don't understand or easily make mistakes, so, I'm sooooorry.)
 
@@ -40,16 +38,19 @@
 
 博主是一名机械设计制造及其自动化专业的学生，以前在车间上课时总需要挑选特定尺寸的毛坯作为被加工工件，奈何本人较懒，所以就有了码这么一个py文件出来助我偷懒的想法。
 
-![上号](https://user-images.githubusercontent.com/83082953/148507103-6ac3a952-3759-47e6-9293-91cfa23fe614.jpg)
+<div align=center><img src="https://user-images.githubusercontent.com/83082953/148507103-6ac3a952-3759-47e6-9293-91cfa23fe614.jpg"></div>
 
 
 
 ## 一、开发前准备
 **喜欢用Pycharm还是Anaconda或其它都可以，没有关系。**
-因为摄像头使用的只是普通的家用摄像头（某夕夕个位数包邮），所以在码程序之前需要准备一个尺寸精度较高（尽量高）的参照物来获取欧氏距离和真实长度的比率。
+因为摄像头使用的只是普通的家用摄像头（某夕个位数包邮），所以在码程序之前需要准备一个尺寸精度较高（尽量高）的参照物来获取欧氏距离和真实长度的比率。
+
 **穷得只能3D打印的屑博主：10mm³，20mm³，30mm³**
 
-(https://img-blog.csdnimg.cn/7a4ebf45b3b749df9c05ffef400da5d8.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA6bqm5YWL5pav6Z-m6Zmk5aaW,size_20,color_FFFFFF,t_70,g_se,x_16)
+<div align=center><img src="https://user-images.githubusercontent.com/83082953/148508807-70604663-6966-422c-b188-8b4d8f1f3142.jpg" width="640" height="460" /></div>
+
+
 ## 二、需要的库
 ```python
 from scipy.spatial.distance import euclidean  # 用来计算端点之间的欧氏距离
@@ -96,17 +97,17 @@ def set_camera_type():
 
 ```python
 def call_camera():
-    camera = cv2.VideoCapture(camera_type, cv2.CAP_DSHOW)
+    camera = cv2.VideoCapture(camera_type, cv2.CAP_DSHOW)  # 创建cv2.VideoCapture对象
     if camera.isOpened() is False:
         print('摄像头调用失败')
-        raise AssertionError
+        raise AssertionError  # 调用失败则断言停止
     else:
         while True:
             frame = camera.read()[1]  # 返回捕获到的RGB
-            image = cv2.flip(frame, 1, dst=None)
+            image = cv2.flip(frame, 1, dst=None)  # 图片镜像
             cv2.imshow('Camera', image) 
             if (cv2.waitKey(1) > -1) or (cv2.getWindowProperty('Camera', cv2.WND_PROP_VISIBLE) < 1.0):  # 设置关闭条件
-                cv2.destroyWindow('Camera') 
+                cv2.destroyWindow('Camera')  # 关闭窗口
                 break
     return image
 
@@ -118,13 +119,13 @@ def call_camera():
  - **imutils.grab_contours**用来获取**cv2.findContours**的contours，**cv2.findContours**的contours才是实际上能够被用于计算的数据。
 ```python
 def get_points(image):
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    gaussian_blur = cv2.GaussianBlur(gray_image, (5, 5), 0)
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # 二值化
+    gaussian_blur = cv2.GaussianBlur(gray_image, (5, 5), 0)  # 高斯平滑
     min_val, max_val = 50, 100
-    margin = cv2.Canny(gaussian_blur, min_val, max_val)
+    margin = cv2.Canny(gaussian_blur, min_val, max_val)  # 边缘检测
     open_margin = cv2.dilate(margin, None, iterations=15)  # 开运算，如果有纯色平台iteration可以小一些
-    contours = cv2.findContours(open_margin, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  
-    points = imutils.grab_contours(contours) 
+    contours = cv2.findContours(open_margin, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # 轮廓查找
+    points = imutils.grab_contours(contours)   # 获取轮廓数据
     return points
 ```
 ### 3.4边框绘制（数据计算）
@@ -134,22 +135,22 @@ def get_points(image):
 def draw_frame(image, points, tag):
     if tag == 0:
         for point in points:
-            min_area = cv2.minAreaRect(point)
+            min_area = cv2.minAreaRect(point)  # 计算最小外接矩阵面积
             min_area_point = cv2.boxPoints(min_area)  # 获取最小外接矩阵的四个端点
-            int_point = [min_area_point.astype('int')]
-            cv2.drawContours(image, int_point, -1, (0, 0, 255), 1)
+            int_point = [min_area_point.astype('int')]  # 修改为cv2.drawContours能够读取的数据类型
+            cv2.drawContours(image, int_point, -1, (0, 0, 255), 1)  # 点连线绘制
             return min_area_point
     else:
         for point in points:
-            min_area = cv2.minAreaRect(point) 
-            min_area_point = cv2.boxPoints(min_area)
-            left_point, right_point = min_area_point[0], min_area_point[1]
-            X = left_point[0] + int(abs(right_point[0] - left_point[0]) / 2)  # 获取顶部中点X坐标
-            Y = left_point[1] + int(abs(right_point[1] - left_point[1]) / 2)  # 获取顶部中点Y坐标
+            min_area = cv2.minAreaRect(point)   # 计算最小外接矩阵面积
+            min_area_point = cv2.boxPoints(min_area)  # 获取最小外接矩阵的四个端点
+            left_point, right_point = min_area_point[0], min_area_point[1]  # 获取左上、右上的两个端点，用于计算长度
+            X = left_point[0] + int(abs(right_point[0] - left_point[0]) / 2)  # 获取顶部中点X坐标，用于定位文字显示位置x
+            Y = left_point[1] + int(abs(right_point[1] - left_point[1]) / 2)  # 获取顶部中点Y坐标，用于定位文字显示位置y
             int_point = [min_area_point.astype('int')]
             cv2.drawContours(image, int_point, -1, (0, 0, 255), 1)  # 绘制边框
             radius = (euclidean(left_point, right_point) / 2) / rate  # 获取半径
-            area = int((3.1415926 * pow(radius, 2))) 
+            area = int((3.1415926 * pow(radius, 2)))   # 将被测量物体视为圆，套入计算公式
             # 展示面积信息
             cv2.putText(image, '{}'.format(area), (int(X), int(Y)), cv2.FONT_HERSHEY_SIMPLEX, 5, (0, 0, 255), 5)
 ```
@@ -163,7 +164,7 @@ left_point, right_point = min_area_point[0], min_area_point[1]  # 获取两处�
 ```python
 def rate_calculation():
     delay('计算比率')
-    left_point, right_point = reference_points[0], reference_points[1]
+    left_point, right_point = reference_points[0], reference_points[1]  # 获取极左、极右两点，用于计算度量空间内的距离
     length_euclidean = euclidean(left_point, right_point)  # 计算欧氏距离
     while True:
         try:
@@ -188,25 +189,25 @@ def rate_calculation():
 值得关注的是selected_points 的筛选方式，在没有纯黑或其它纯色的平台上放置物体很容易捕获到许多不需要的信息，尤其是在有许多**小的坑坑洼洼**的桌子上，所以就采用了将筛选面积不断加一，直到只剩下参照物对象的方式，即len(selected_points) = 1。
 ```python
 def reference_processing():
-    circulation = True
+    circulation = True  # 设置循环条件
     while circulation:
         image = call_camera()
         points = get_points(image)  # 图像处理
         selected_points = []  # 创建被筛选的轮廓数据的容器
         # --------按面积大小筛选轮廓--------
-        filter_area = 1
+        filter_area = 1  # 设置最初筛选值
         while True:
             [selected_points.append(i) for i in points if cv2.contourArea(i) > filter_area]
             if len(selected_points) > 1:
                 selected_points.clear()  # 清空内容，为下一次存储数据用
-                filter_area += 1 
+                filter_area += 1  # 筛选面积+1
             else:
                 break
-        reference_area_point = draw_frame(image, selected_points, 0)
+        reference_area_point = draw_frame(image, selected_points, 0)  # 调用draw_frame绘制边框
         while True:
-            cv2.imshow('reference', image)
-            if (cv2.waitKey(1) > -1) or (cv2.getWindowProperty('reference', cv2.WND_PROP_VISIBLE) < 1.0): 
-                cv2.destroyWindow('reference')
+            cv2.imshow('reference', image)  # 窗口显示
+            if (cv2.waitKey(1) > -1) or (cv2.getWindowProperty('reference', cv2.WND_PROP_VISIBLE) < 1.0):  # 设置关闭条件
+                cv2.destroyWindow('reference')  # 关闭窗口
                 break
         while circulation:
             try:
@@ -230,8 +231,8 @@ def real_time_processing():
     print('进入实时测量，按下回车键结束程序')
     camera = cv2.VideoCapture(camera_type, cv2.CAP_DSHOW)
     while True:
-        frame = camera.read()[1]
-        image = cv2.flip(frame, 1, dst=None)
+        frame = camera.read()[1]  # 返回捕获到的RGB
+        image = cv2.flip(frame, 1, dst=None)  # 水平镜像
         points = get_points(image)  # 获取所有参照物的端点
         selected_points = []
         [selected_points.append(i) for i in points if cv2.contourArea(i) > filter_area]  # 筛选后的端点
@@ -244,14 +245,23 @@ def real_time_processing():
 ```
 ## 四、成果展示
 **执行过程：**（不小心多摁了一次enter，所以是否理想参照物又被循环输出了一次）
-![请添加图片描述](https://img-blog.csdnimg.cn/1cb1d5cbee8e489cadd87e39e346a87b.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA6bqm5YWL5pav6Z-m6Zmk5aaW,size_20,color_FFFFFF,t_70,g_se,x_16)
+
+<div align=center><img src="https://github.com/Yjie0929/object-size-measurement-based-on-OpenCV/blob/f9681ea5d156d4b98ff1541263a260b046419f96/%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B.png"></div>
+
 
 **参照物拍照：**（指方为圆）
-![请添加图片描述](https://img-blog.csdnimg.cn/218652999f23440b8704e373af8246f1.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA6bqm5YWL5pav6Z-m6Zmk5aaW,size_20,color_FFFFFF,t_70,g_se,x_16)
+
+<div align=center><img src="https://github.com/Yjie0929/object-size-measurement-based-on-OpenCV/blob/f9681ea5d156d4b98ff1541263a260b046419f96/%E5%8F%82%E7%85%A7%E7%89%A9.png" width="640" height="460" /></div>
+
 **实时测量：**（指方为圆），这里摄像头高度发生了变化，拍摄角度也出现误差，可以采用只存储最小值数据尽量保证精度。
-![请添加图片描述](https://img-blog.csdnimg.cn/8206f5342172466293cce21d38517487.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA6bqm5YWL5pav6Z-m6Zmk5aaW,size_20,color_FFFFFF,t_70,g_se,x_16)
-**验证：**（高度发生变化出现的误差为-4）![在这里插入图片描述](https://img-blog.csdnimg.cn/7ef65a9ee1ea4571ab9352c9f73cdf42.png#pic_center =300x90)
+
+<div align=center><img src="https://github.com/Yjie0929/object-size-measurement-based-on-OpenCV/blob/f9681ea5d156d4b98ff1541263a260b046419f96/%E7%BB%93%E6%9E%9C.png" width="640" height="460" /></div>
+
+**验证：**（高度发生变化出现的误差为-4）
+
+<div align=center><img src="https://github.com/Yjie0929/object-size-measurement-based-on-OpenCV/blob/45801db4c06e468f9cac16c4e5dc36e30cf50030/%E9%AA%8C%E8%AF%81%E5%85%AC%E5%BC%8F.png"></div>
 
 
 **补充：测量出现误差的主要原因在这！累死我了，有钱以后我一定要买一个摄像头！！**
-![请添加图片描述](https://img-blog.csdnimg.cn/293adfe3d5e44d238b3b5ea21384bdfc.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBA6bqm5YWL5pav6Z-m6Zmk5aaW,size_20,color_FFFFFF,t_70,g_se,x_16)
+
+<div align=center><img src="https://github.com/Yjie0929/object-size-measurement-based-on-OpenCV/blob/45801db4c06e468f9cac16c4e5dc36e30cf50030/%E7%B4%AF%E6%AD%BB%E6%88%91%E4%BA%86.png" width="640" height="460" /></div>
